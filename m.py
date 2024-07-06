@@ -3,6 +3,7 @@ import re
 import logging
 import json
 import sys
+import html
 
 class M:
 
@@ -34,7 +35,7 @@ class M:
 
     def parse_city(self, city):
 
-        address_re = re.compile('<div class="adress_txt">(.*)</div>')
+        address_re = re.compile('<div class="adress_txt">([^<]*)</div>', re.DOTALL)
 
         all = []
 
@@ -47,10 +48,14 @@ class M:
             all_matches = address_re.findall(t)
 
             if len(all_matches) == 0:
+                self.log.info('no matches, length %s, lines %s, adress %s', len(t), len(t.split('\n')), t.count('adress_txt'))
                 break
 
-            for match in all_matches:
-                all.append({'city': city, 'page': i, 'address': match})
+            for i, match in enumerate(all_matches):
+                match_strip = match.strip()
+                unescaped = html.unescape(match_strip)
+                self.log.info('Matched %s %s', i, unescaped)
+                all.append({'city': city, 'page': i, 'address': unescaped})
 
         self.append_records(all)
         return all
